@@ -1,87 +1,38 @@
 const express = require('express');
 
 const fs = require('fs');
+const morgan = require('morgan');
+
+const tourRouter = require('./routes/tourRoutes');
+const userRouter = require('./routes/userRoutes');
 
 const app = express();
+
+app.use(morgan('dev'));
+
+/////////////////////////////////////////////////////
 app.use(express.json());
 
-const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`)
-);
-
-app.get('/api/v1/tours/:id?', (req, res) => {
-  const id = req.params.id * 1;
-  const tour = tours.find((el) => el.id === id);
-
-  if (!id) {
-    return res.status(200).json({
-      status: 'succes',
-      data: {
-        tours: tours,
-      },
-    });
-  }
-
-  if (!tour) {
-    return res.status(404).json({ message: 'failed' });
-  }
-  res.status(200).json({
-    status: 'succes',
-    results: tours.length,
-    data: {
-      tours: tour,
-    },
-  });
+app.use((req, res, next) => {
+  next();
 });
 
-/////
+app.use('/api/v1/tours', tourRouter);
+app.use('/api/v1/users', userRouter);
 
-app.post('/api/v1/tours', (req, res) => {
-  console.log(req.body);
+//////////////////////////////////////////////////////////////
 
-  const newID = tours[tours.length - 1].id + 1;
-  const newTour = Object.assign({ id: newID }, req.body);
+////////////////////////////////////////////users
 
-  tours.push(newTour);
-  fs.writeFile(
-    `${__dirname}/dev-data/data/tours-simple.json`,
-    JSON.stringify(tours),
-    (err) => {
-      res.status(201).json({
-        status: 'succes',
-        data: {
-          tours: newTour,
-        },
-      });
-    }
-  );
-});
+//////////////////////////////////////////////////////////////////
+//app.get('/api/v1/tours/:id?', getAllTours);
 
-app.patch('/api/v1/tours/:id', (req, res) => {
-  if (req.params.id * 1 > tours.length) {
-    return res.status(404).json({ status: 'fail', message: 'invalid' });
-  }
+//app.post('/api/v1/tours', addNewTour);
 
-  res.status(200).json({
-    status: 'succes',
-    data: {
-      tour: 'updated',
-    },
-  });
+// app.patch('/api/v1/tours/:id', editTour);
 
-  res.send('done patch');
-});
+// app.delete('/api/v1/tours/:id', deleteTour);
 
-app.delete('/api/v1/tours/:id', (req, res) => {
-  if (req.params.id * 1 > tours.length) {
-    return res.status(404).json({ status: 'fail', message: 'invalid id' });
-  }
-
-  res.status(204).json({
-    status: 'succes',
-    data: 'null',
-  });
-});
 const port = 3000;
 
 app.listen(port, () => {
